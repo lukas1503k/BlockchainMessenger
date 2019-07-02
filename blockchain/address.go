@@ -1,17 +1,18 @@
 package blockchain
 
-import(
+import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"log"
 )
 
-type wallet struct{
-	publicKey []byte
+type wallet struct {
+	publicKey  []byte
 	privateKey ecdsa.PrivateKey
 }
 
-func createWallet() *wallet{
+func createWallet() *wallet {
 	//creates a wallet
 	privKey, pubKey = getKeys()
 
@@ -31,8 +32,9 @@ func getKeys() (ecdsa.PrivateKey, []byte) {
 	newPublicKey := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
 
 	return *newPrivateKey, newPublicKey
-	
 
 }
 
-fun
+func initConversation(to string) {
+
+}
