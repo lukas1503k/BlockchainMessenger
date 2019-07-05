@@ -2,34 +2,61 @@ package blockchain
 
 import (
 	"bytes"
+	"log"
 	"encoding/gob"
+	"time"
+
 )
 
+
+const version int = 6
+const difficulty int = 0
 type block struct {
-	prevHash    []byte
-	hash        []byte
-	activity    []*message
+	header blockHeader
+	messages    []*message
 	chainLength int
+	blockHash []byte
+}
+
+
+type blockHeader struct{
+	timestamp time.Time
+	merkleRoot	[]byte
+	version int
+	nounce int
+	difficulty int
+	prevHash []byte
+
 }
 
 func createBlock(prevHash []byte, messages []*message, chainLength int) *block {
 
-	hashRoot := getHash(prevHash, messages)
-	newBlock := &block{prevHash, hashRoot, messages, chainLength + 1}
+
+
+	hashRoot := getHash(messages)
+
+	blockHash, nounce := proofOfWork()
+
+
+	header := blockHeader{time.Now(), hashRoot, version, nounce, difficulty,
+		prevHash}
+
+	newBlock := &block{header, messages, chainLength + 1, blockHash}
 
 	return newBlock
 
 }
 
-func getHash(prevHash []byte, messages []*message) []byte {
+func getHash(messages []*message) []byte {
 
-	data := append(prevHash, messages.Serialize()...)
+	data := serializeMessageArray(messages)
 
-	return merkletree.getRoot(data)
+	return getRoot(data)
 }
 
-func createGenesis() *block {
-	genesis := &block{0, nil, nil, 0}
+func createGenesis(messages []*message) *block {
+
+	genesis := createBlock(nil, messages, 0)
 
 	return genesis
 }
@@ -51,4 +78,10 @@ func deserializeBlock(incBlock []byte) *block {
 	decoder.Decode(&decodedBlock)
 
 	return &decodedBlock
+}
+
+
+func proofOfWork() ([]byte, int){
+
+	return *new([]byte), 0
 }

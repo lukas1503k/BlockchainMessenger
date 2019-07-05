@@ -16,9 +16,9 @@ type MerkleNode struct {
 }
 
 func getRoot(data [][]byte) []byte {
-	root := initTree(data)
+	tree := initTree(data)
 
-	return root.data
+	return tree.root.data
 
 }
 

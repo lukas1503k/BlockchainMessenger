@@ -14,7 +14,7 @@ type wallet struct {
 
 func createWallet() *wallet {
 	//creates a wallet
-	privKey, pubKey = getKeys()
+	privKey, pubKey := getKeys()
 
 	newWallet := wallet{pubKey, privKey}
 

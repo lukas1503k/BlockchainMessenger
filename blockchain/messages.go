@@ -3,6 +3,7 @@ package blockchain
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 )
 
 type message struct {
@@ -17,13 +18,35 @@ type messageChain struct {
 	messages  []message
 }
 
-func Serialize(messages []*message) []byte {
+func serializeMessageArray(messages []*message) [][]byte{
+	var serializedMessages [][]byte
+
+	for _, message := range messages{
+		serializedMessage := serializeMessage(message)
+		serializedMessages := append(serializedMessages, serializedMessage)
+	}
+	return serializedMessages
+
+}
+
+func serializeMessage(message *message) []byte {
 	var msg bytes.Buffer
 
 	msgEncoder := gob.NewEncoder(&msg)
 
-	msgEncoder.Encode(messages)
-
+	err := msgEncoder.Encode(message)
+	fmt.Println(err)
 	return msg.Bytes()
+
+}
+
+func deserializeMessage(data []byte) *message{
+
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+
+	err := decoder.Decode(messages)
+	fmt.Println(err)
+	return &messages
+
 
 }
