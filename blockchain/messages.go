@@ -11,11 +11,13 @@ type message struct {
 	to      string
 	from    string
 	message []byte
+	amount  float64
 }
 
 type messageChain struct {
-	contactID string
-	messages  []message
+	contactID    string
+	messages     []message
+	messageCount int
 }
 
 func serializeMessageArray(messages []*message) [][]byte{
@@ -29,24 +31,24 @@ func serializeMessageArray(messages []*message) [][]byte{
 
 }
 
-func serializeMessage(message *message) []byte {
-	var msg bytes.Buffer
+func serializeMessage(incomingMessage *message) []byte {
+	var incMsg bytes.Buffer
 
-	msgEncoder := gob.NewEncoder(&msg)
+	msgEncoder := gob.NewEncoder(&incMsg)
 
-	err := msgEncoder.Encode(message)
+	err := msgEncoder.Encode(incomingMessage)
 	fmt.Println(err)
-	return msg.Bytes()
+	return incMsg.Bytes()
 
 }
 
 func deserializeMessage(data []byte) *message{
-
+	var decodedMessage message
 	decoder := gob.NewDecoder(bytes.NewReader(data))
 
-	err := decoder.Decode(messages)
+	err := decoder.Decode(decodedMessage)
 	fmt.Println(err)
-	return &messages
+	return &decodedMessage
 
 
 }
