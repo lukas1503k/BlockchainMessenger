@@ -1,0 +1,37 @@
+blockchain: set the blockchain up DONE
+
+methods, , init blockchain create db ect
+
+
+
+
+
+Blockchain:
+    init blockchain (July 6)
+    add block to db (July 6)
+    load blockchain on boot (July 6)
+
+
+
+
+
+Messages:
+    handle fees
+        create output that is less that the utxo
+    zk-Starks
+        -mimc
+
+
+        create transaction with no output to go to coinbase
+    allow straight transactions
+
+
+Network:
+    connect to other nodes
+    download missing blocks
+    consensus
+
+
+
+proofOfAlgorithm:
+    try proofOfStake

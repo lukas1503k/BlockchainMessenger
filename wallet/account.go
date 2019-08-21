@@ -60,3 +60,5 @@ func signTransaction(wallet *account, message []byte) []byte {
 	signature := append(r.Bytes(), s.Bytes()...)
 	return signature
 }
+
+func sendMessage(wallet *account, text )
