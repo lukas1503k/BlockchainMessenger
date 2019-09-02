@@ -10,23 +10,24 @@ import (
 	"strconv"
 )
 
-type account struct {
+type Account struct {
 	publicKey     []byte
 	privateKey    ecdsa.PrivateKey
 	address       []byte
 	accountNounce int64
+	balance       float64
 }
 
-func createAccount() *account {
+func CreateAccount() *Account {
 	//creates an empty account
 	privKey, pubKey := getKeys()
 
-	newAccount := account{pubKey, privKey, nil}
+	newAccount := Account{pubKey, privKey, nil, 0, 0}
 
 	return &newAccount
 }
 
-func getKeys() (ecdsa.PrivateKey, []byte) {
+func CreateKeys() (ecdsa.PrivateKey, []byte) {
 	// creates a unique key pair for the wallet
 	curve := secp256k1.S256()
 	newPrivateKey, err := ecdsa.GenerateKey(curve, rand.Reader)
@@ -40,7 +41,7 @@ func getKeys() (ecdsa.PrivateKey, []byte) {
 
 }
 
-func getAddress(wallet *account) {
+func GetAddress(wallet *Account) {
 	keyHash := sha512.Sum512(wallet.publicKey)
 	address := keyHash[:30]
 
@@ -48,7 +49,7 @@ func getAddress(wallet *account) {
 
 }
 
-func signTransaction(wallet *account, message []byte) []byte {
+func SignTransaction(wallet *Account, message []byte) []byte {
 	messageHash := sha256.Sum256(message)
 	nounce := []byte(strconv.FormatInt(wallet.accountNounce, 10))
 	messageHash = append(messageHash, nounce...)
@@ -61,4 +62,11 @@ func signTransaction(wallet *account, message []byte) []byte {
 	return signature
 }
 
-func sendMessage(wallet *account, text )
+func InitConversation(wallet *Account, address []byte) {
+	if wallet.balance < getTransactionFee()*2 {
+		log.Panic("InsuffienctFunds")
+	} else {
+
+	}
+
+}

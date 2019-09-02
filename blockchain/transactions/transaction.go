@@ -1,9 +1,4 @@
 package transactions
 
-type transaction struct {
-	ID      []byte
-	inputs  []txInput
-	outputs []txOutput
+type transactionKe struct {
 }
-
-func createTransaction(outputs []txOutput)
