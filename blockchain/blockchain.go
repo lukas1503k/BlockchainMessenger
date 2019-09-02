@@ -32,7 +32,7 @@ func loadBlockchain() *blockchain {
 
 }
 func loadExistingBlockchain() *blockchain {
-	options := badger.Options
+	options := badger.Options(nil)
 	options.Dir = path
 	options.ValueDir = path
 	db, err := openDatabase(path, options)

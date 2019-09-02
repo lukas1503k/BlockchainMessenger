@@ -1,7 +1,11 @@
 package wallet
 
+import (
+	"github.com/lukas1503k/msger/blockchain"
+)
+
 type MessageKeyPair struct {
-	message []blockchain.Message
+	message blockchain.Message
 	key     []byte
 }
 
@@ -12,4 +16,7 @@ type MessageChain struct {
 	//ephemeralKey ecdsa.PrivateKey
 }
 
-func AddMessageToChain(newMessage message)
+func (chain *MessageChain) AddMessageToChain(newMessage blockchain.Message, key []byte) {
+	chain.messages = append(chain.messages, MessageKeyPair{newMessage, key})
+	chain.messageCount += 1
+}

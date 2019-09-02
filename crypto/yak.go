@@ -3,7 +3,6 @@ package YAK
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/sha256"
 	"math/big"
 )
 
@@ -20,31 +19,7 @@ func GenerateSharedKey(k *big.Int, w *big.Int, QE ecdsa.PublicKey, W ecdsa.Publi
 
 }
 
-func generateK(transaction *tx, key ecdsa.PrivateKey) *big.Int {
-	txBytes := SerializeTx(transaction)
-	tx := sha256.Sum256(txBytes)
-	txHash := tx[:]
-	txHashInt := new(big.Int)
-	txHashInt.SetBytes(txHash)
-
-	r, s := transaction.getSignature()
-
-	K := new(big.Int)
-
-	K.Mul(r, key.PublicKey.X)
-	K.Add(K, txHashInt)
-	K.Mul(K, 1/s)
-
-	return K
-}
-
-func generateQ(k *big.Int) (*big.Int, *big.Int) {
-
-	curve := elliptic.P256()
-
-	Qx, Qy := curve.ScalarBaseMult(k.Bytes())
-
-	return Qx, Qy
+func getQ(r, s *big.Int, msgHash) {
 
 }
 

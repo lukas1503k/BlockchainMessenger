@@ -4,42 +4,52 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/lukas1503k/msger/wallet"
+	"github.com/lukas1503k/msger/crypto"
+	"math/big"
 )
 
 type Message struct {
-	nounce  int64
-	to      string
-	from    string
-	message []byte
-	amount  float64
+	nounce    int64
+	to        string
+	from      string
+	message   []byte
+	signature []byte
+	amount    float64
 }
 
 type KeyExchange struct {
-	nounce    int64
-	to        []byte
-	from      []byte
-	signature []byte
-	publicKey []byte
+	nounce     int64
+	to         []byte
+	from       []byte
+	signature  []byte
+	publicKey  []byte
+	SchnorrZKP *crypto.SchnorrProof
+	responded  bool
 }
 
 type ExchangeResponse struct {
 	initialMessage KeyExchange
-	signature      []byte
+	Signature      []byte
 	publicKey      []byte
+	address        []byte
+	SchnorrZKP     *crypto.SchnorrProof
 }
 
-func InitiateExchange(initAccount *wallet.Account, destination []byte) *KeyExchange {
-	msg := new(KeyExchange)
-	msg.from = initAccount.GetAddress()
-	msg.nounce = initAccount.accountNounce
-	initAccount.accountNounce += 1
-	msg.to = destination
-	msg.publicKey = initAccount.publicKey
-	msg.signature = wallet.SignTransaction(initAccount, SerializeMessage(msg))
+func SignMessage(msg *Message, signature []byte) {
+	msg.Signature = signature
+}
 
-	return msg
+func GetRSValues(signature []byte) (big.Int, big.Int) {
+	sigLen := len(signature)
+	rBytes := signature[:sigLen]
+	sBytes := signature[sigLen:]
 
+	var r, s big.Int
+
+	r.SetBytes(rBytes)
+	s.SetBytes(sBytes)
+
+	return r, s
 }
 
 func SerializeMessageArray(messages []*Message) [][]byte {

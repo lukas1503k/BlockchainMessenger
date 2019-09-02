@@ -2,10 +2,13 @@ package wallet
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/lukas1503k/msger/blockchain"
+	"github.com/lukas1503k/msger/crypto"
 	"log"
 	"strconv"
 )
@@ -20,7 +23,7 @@ type Account struct {
 
 func CreateAccount() *Account {
 	//creates an empty account
-	privKey, pubKey := getKeys()
+	privKey, pubKey := CreateKeys()
 
 	newAccount := Account{pubKey, privKey, nil, 0, 0}
 
@@ -50,10 +53,11 @@ func GetAddress(wallet *Account) {
 }
 
 func SignTransaction(wallet *Account, message []byte) []byte {
-	messageHash := sha256.Sum256(message)
+	hash := sha256.Sum256(message)
+	messageHash := hash[:]
 	nounce := []byte(strconv.FormatInt(wallet.accountNounce, 10))
 	messageHash = append(messageHash, nounce...)
-	r, s, err := ecdsa.Sign(rand.Reader, wallet.privateKey, messageHash)
+	r, s, err := ecdsa.Sign(rand.Reader, &wallet.privateKey, messageHash)
 
 	if err != nil {
 		panic(err)
@@ -62,11 +66,51 @@ func SignTransaction(wallet *Account, message []byte) []byte {
 	return signature
 }
 
-func InitConversation(wallet *Account, address []byte) {
+func InitExchange(wallet *Account, toAddress []byte, transaction blockchain.Message) *blockchain.KeyExchange {
+	var exchange *blockchain.KeyExchange
 	if wallet.balance < getTransactionFee()*2 {
-		log.Panic("InsuffienctFunds")
+		log.Panic("Insufficient Funds")
 	} else {
+		curve := elliptic.P256()
+		ephemeralKey, err := ecdsa.GenerateKey(curve, rand.Reader)
+		if err != nil {
+			log.Panic(err)
+		}
+		proof := crypto.CreateProof(*wallet.privateKey, ephemeralKey)
+		exchange = &blockchain.KeyExchange{wallet.accountNounce, toAddress, wallet.address, nil, wallet.publicKey, proof, false}
+		exchangeBytes := blockchain.SerializeMessage(exchange)
+		sig := SignTransaction(wallet, exchangeBytes)
+		blockchain.SignMessage(exchangeBytes, sig)
 
 	}
 
+	return exchange
 }
+
+func RespExchange(wallet *Account, initialExchange *blockchain.KeyExchange) *blockchain.ExchangeResponse {
+	curve := secp256k1.S256()
+	ephemeralKey, err := ecdsa.GenerateKey(curve, rand.Reader)
+
+	if err != nil {
+		log.Panic(err)
+	}
+	proof := crypto.CreateProof(&wallet.privateKey, ephemeralKey)
+	exchange := blockchain.ExchangeResponse{*initialExchange, nil, wallet.publicKey, wallet.address, proof}
+	exchangeBytes := blockchain.SerializeMessage(exchange)
+	sig := SignTransaction(wallet, exchangeBytes)
+	blockchain.SignMessage(exchangeBytes, sig)
+
+	return &exchange
+}
+
+func GenerateSharedKey(account Account, keyExchangeInit blockchain.KeyExchange, keyExchangeResponce blockchain.ExchangeResponse) {
+	if keyExchangeInit.from == account.address {
+		Qa :=
+	}
+
+}
+
+
+
+
+
