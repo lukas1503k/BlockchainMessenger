@@ -21,6 +21,9 @@ type Account struct {
 	balance       float64
 }
 
+func (account Account) GetPrivateKey() ecdsa.PrivateKey {
+	return account.privateKey
+}
 func CreateAccount() *Account {
 	//creates an empty account
 	privKey, pubKey := CreateKeys()
@@ -102,15 +105,3 @@ func RespExchange(wallet *Account, initialExchange *blockchain.KeyExchange) *blo
 
 	return &exchange
 }
-
-func GenerateSharedKey(account Account, keyExchangeInit blockchain.KeyExchange, keyExchangeResponce blockchain.ExchangeResponse) {
-	if keyExchangeInit.from == account.address {
-		Qa :=
-	}
-
-}
-
-
-
-
-

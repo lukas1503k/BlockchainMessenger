@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"crypto/ecdsa"
 	"github.com/lukas1503k/msger/blockchain"
 )
 
@@ -13,7 +14,7 @@ type MessageChain struct {
 	contactID    []byte
 	messages     []MessageKeyPair
 	messageCount int
-	//ephemeralKey ecdsa.PrivateKey
+	ephemeralKey ecdsa.PrivateKey
 }
 
 func (chain *MessageChain) AddMessageToChain(newMessage blockchain.Message, key []byte) {

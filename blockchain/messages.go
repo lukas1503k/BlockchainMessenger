@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
 	"github.com/lukas1503k/msger/crypto"
@@ -10,19 +11,19 @@ import (
 
 type Message struct {
 	nounce    int64
-	to        string
-	from      string
-	message   []byte
-	signature []byte
+	To        string
+	From      string
+	Message   []byte
+	Signature []byte
 	amount    float64
 }
 
 type KeyExchange struct {
 	nounce     int64
-	to         []byte
-	from       []byte
-	signature  []byte
-	publicKey  []byte
+	To         []byte
+	From       []byte
+	Signature  []byte
+	PublicKey  []byte
 	SchnorrZKP *crypto.SchnorrProof
 	responded  bool
 }
@@ -30,8 +31,8 @@ type KeyExchange struct {
 type ExchangeResponse struct {
 	initialMessage KeyExchange
 	Signature      []byte
-	publicKey      []byte
-	address        []byte
+	PublicKey      []byte
+	Address        []byte
 	SchnorrZKP     *crypto.SchnorrProof
 }
 
@@ -82,4 +83,10 @@ func DeserializeMessage(data []byte) *Message {
 	fmt.Println(err)
 	return &decodedMessage
 
+}
+
+func HashMessage(message interface{}) []byte {
+	messageBytes := SerializeMessage(message)
+	messageHash := sha256.Sum256(messageBytes)
+	return messageHash[:]
 }
