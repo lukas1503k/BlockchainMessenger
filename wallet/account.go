@@ -19,8 +19,14 @@ type Account struct {
 	address       []byte
 	accountNounce int64
 	balance       float64
+	conversations *[]MessageChain
 }
 
+func IncrementNounce(account *Account) int64 {
+	nounce := account.accountNounce
+	account.accountNounce += 1
+	return nounce
+}
 func (account Account) GetPrivateKey() ecdsa.PrivateKey {
 	return account.privateKey
 }
@@ -28,7 +34,7 @@ func CreateAccount() *Account {
 	//creates an empty account
 	privKey, pubKey := CreateKeys()
 
-	newAccount := Account{pubKey, privKey, nil, 0, 0}
+	newAccount := Account{pubKey, privKey, nil, 0, 0, new([]MessageChain)}
 
 	return &newAccount
 }
@@ -79,7 +85,7 @@ func InitExchange(wallet *Account, toAddress []byte, transaction blockchain.Mess
 		if err != nil {
 			log.Panic(err)
 		}
-		proof := crypto.CreateProof(*wallet.privateKey, ephemeralKey)
+		proof := crypto.CreateProof(&wallet.privateKey, ephemeralKey)
 		exchange = &blockchain.KeyExchange{wallet.accountNounce, toAddress, wallet.address, nil, wallet.publicKey, proof, false}
 		exchangeBytes := blockchain.SerializeMessage(exchange)
 		sig := SignTransaction(wallet, exchangeBytes)

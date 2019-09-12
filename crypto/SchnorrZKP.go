@@ -12,14 +12,13 @@ import (
 
 type SchnorrProof struct {
 	r big.Int
-	A ecdsa.PublicKey
 	V ecdsa.PublicKey
 }
 
 //for this proof we assume both parties are using the same curve which has been decided ahead of time
 var curve = secp256k1.S256()
 
-func createChallenge(a *ecdsa.PrivateKey, v *ecdsa.PrivateKey) ([]byte, *ecdsa.PrivateKey, *big.Int) {
+func createChallenge(a *ecdsa.PrivateKey, v *ecdsa.PrivateKey, userID []byte) ([]byte, *big.Int) {
 
 	//gets public keys from private keys
 	V := v.PublicKey.X.Bytes()
@@ -37,16 +36,16 @@ func createChallenge(a *ecdsa.PrivateKey, v *ecdsa.PrivateKey) ([]byte, *ecdsa.P
 
 	challenge := sha256.Sum256(challengeBytes)
 	c := challenge[:]
-	return c, a, n
+	return c, n
 }
 
-func CreateProof(a *ecdsa.PrivateKey, v *ecdsa.PrivateKey) *SchnorrProof {
+func CreateProof(a *ecdsa.PrivateKey, v *ecdsa.PrivateKey, userID []byte) *SchnorrProof {
 	/*
 		Takes in two private keys and returns a Schnorr ZKP
 	*/
 
 	//calls the helper function CreateChallenge
-	c, a, n := createChallenge(a, v)
+	c, n := createChallenge(a, v, userID)
 
 	//gets public keys
 	V := v.PublicKey
@@ -61,23 +60,23 @@ func CreateProof(a *ecdsa.PrivateKey, v *ecdsa.PrivateKey) *SchnorrProof {
 	r.Sub(v.D, r)
 	r.Mod(r, n)
 
-	return &SchnorrProof{*r, a.PublicKey, V}
+	return &SchnorrProof{*r, V}
 
 }
 
-func VerifyProof(proof *SchnorrProof) bool {
+func VerifyProof(proof *SchnorrProof, A ecdsa.PublicKey, UserID []byte) bool {
 
 	//if the key is not on the curve the proof is automatically false
-	if !curve.IsOnCurve(proof.A.X, proof.A.Y) {
+	if !curve.IsOnCurve(A.X, A.Y) {
 		return false
 	}
 
 	//calculated G * [r] (GxrX represents the X coordinate of G * [r]. Likewise, GxrY represents G * [r]'s Y coordinate)
 	GxrX, GxrY := curve.ScalarBaseMult(proof.r.Bytes())
 
-	c := getChallenge(curve.Params(), proof.V.X, proof.A)
+	c := getChallenge(curve.Params(), proof.V.X, A, UserID)
 
-	AxcX, AxcY := curve.ScalarMult(proof.A.X, proof.A.Y, c)
+	AxcX, AxcY := curve.ScalarMult(A.X, A.Y, c)
 
 	//finalX represents the addition of points in A * [c] + G * [r]
 	finalX, finalY := curve.Add(GxrX, GxrY, AxcX, AxcY)
@@ -86,9 +85,10 @@ func VerifyProof(proof *SchnorrProof) bool {
 
 }
 
-func getChallenge(parameters *elliptic.CurveParams, V *big.Int, A ecdsa.PublicKey) []byte {
+func getChallenge(parameters *elliptic.CurveParams, V *big.Int, A ecdsa.PublicKey, UserID []byte) []byte {
 	challengeBytes := append(parameters.Gx.Bytes(), V.Bytes()...)
 	challengeBytes = append(challengeBytes, A.X.Bytes()...)
+	challengeBytes = append(challengeBytes, UserID...)
 	challenge := sha256.Sum256(challengeBytes)
 	return challenge[:]
 }

@@ -1,4 +1,4 @@
-package YAK
+package crypto
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ func GenerateSharedKey(account wallet.Account, keyExchangeInit blockchain.KeyExc
 
 		messageHash = blockchain.HashMessage(emptyInit)
 
-		WB := keyExchangeResponse.SchnorrZKP.V
+		WB = keyExchangeResponse.SchnorrZKP.V
 
 	} else {
 
@@ -41,7 +41,7 @@ func GenerateSharedKey(account wallet.Account, keyExchangeInit blockchain.KeyExc
 		rB = keyExchangeInit.Signature[:sigLen]
 
 		messageHash = blockchain.HashMessage(emptyResponse)
-		WB := keyExchangeInit.SchnorrZKP.V
+		WB = keyExchangeInit.SchnorrZKP.V
 
 	}
 
@@ -79,7 +79,9 @@ func GetEllipticKeyPair(x *big.Int, curve elliptic.Curve) *ecdsa.PublicKey {
 	x3 := new(big.Int)
 	x3.Mul(x2, x)
 
-	y2.Add(x3, 7)
+	temp := new(big.Int)
+	temp.Set(7)
+	y2.Add(x3, temp)
 
 	y := new(big.Int)
 

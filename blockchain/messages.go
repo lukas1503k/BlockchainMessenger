@@ -6,13 +6,14 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/lukas1503k/msger/crypto"
+	"github.com/lukas1503k/msger/wallet"
 	"math/big"
 )
 
 type Message struct {
 	nounce    int64
-	To        string
-	From      string
+	To        []byte
+	From      []byte
 	Message   []byte
 	Signature []byte
 	amount    float64
@@ -36,6 +37,15 @@ type ExchangeResponse struct {
 	SchnorrZKP     *crypto.SchnorrProof
 }
 
+func CreateMessage(account *wallet.Account, to []byte, amount float64, message []byte) Message {
+	messageBlock := Message{account.AccountNounce, to, account.Address, message, nil, amount}
+	messageHash := HashMessage(message)
+	sig := wallet.SignTransaction(account, messageHash)
+
+	messageBlock.Signature = sig
+	return messageBlock
+
+}
 func SignMessage(msg *Message, signature []byte) {
 	msg.Signature = signature
 }

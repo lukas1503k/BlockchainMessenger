@@ -10,10 +10,10 @@ import (
 )
 
 func verifyMessage(msg *message) bool {
-	blankMessage = msg
+	blankMessage := msg
 	blankMessage.signature = nil
 	blankMessage.pubKeyHash = nil
-	messageHash := := fmt.Sprintf("%x\n", blankMessage)
+	messageHash := fmt.Sprintf("%x\n", blankMessage)
 	blankMessage = nil
 
 	r := big.Int{}
