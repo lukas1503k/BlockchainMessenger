@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/lukas1503k/msger/crypto"
 	"github.com/lukas1503k/msger/wallet"
+	"github.com/status-im/doubleratchet"
 	"math/big"
 )
 
@@ -37,8 +38,9 @@ type ExchangeResponse struct {
 	SchnorrZKP     *crypto.SchnorrProof
 }
 
-func CreateMessage(account *wallet.Account, to []byte, amount float64, message []byte) Message {
-	messageBlock := Message{account.AccountNounce, to, account.Address, message, nil, amount}
+func CreateMessage(account *wallet.Account, to []byte, amount float64, message doubleratchet.Message) Message {
+	m := SerializeMessage(message)
+	messageBlock := Message{account.AccountNounce, to, account.Address, m, nil, amount}
 	messageHash := HashMessage(message)
 	sig := wallet.SignTransaction(account, messageHash)
 

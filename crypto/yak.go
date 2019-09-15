@@ -10,7 +10,7 @@ import (
 	"math/big"
 )
 
-func GenerateSharedKey(account wallet.Account, keyExchangeInit blockchain.KeyExchange, keyExchangeResponse blockchain.ExchangeResponse, messageChain wallet.MessageChain) (*big.Int, *big.Int) {
+func GenerateSharedKey(account wallet.Account, keyExchangeInit blockchain.KeyExchange, keyExchangeResponse blockchain.ExchangeResponse, messageChain wallet.MessageChain) []byte {
 
 	var r, s, rB, w *big.Int
 	var WB *ecdsa.PublicKey
@@ -68,8 +68,10 @@ func GenerateSharedKey(account wallet.Account, keyExchangeInit blockchain.KeyExc
 
 	finalX, finalY := curve.ScalarMult(addedX, addedY, c.Bytes())
 
-	return finalX, finalY
+	finalBytes32 := append(finalX.Bytes(), finalY.Bytes()...)
+	finalBytes := finalBytes32[:]
 
+	return finalBytes
 }
 
 func GetEllipticKeyPair(x *big.Int, curve elliptic.Curve) *ecdsa.PublicKey {

@@ -9,26 +9,28 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/lukas1503k/msger/blockchain"
 	"github.com/lukas1503k/msger/crypto"
+	"github.com/status-im/doubleratchet"
 	"log"
 	"strconv"
 )
 
 type Account struct {
-	publicKey     []byte
-	privateKey    ecdsa.PrivateKey
-	address       []byte
-	accountNounce int64
-	balance       float64
-	conversations *[]MessageChain
+	PublicKey     []byte
+	PrivateKey    ecdsa.PrivateKey
+	Address       []byte
+	AccountNounce int64
+	Balance       float64
+	Conversations *[]MessageChain
+	Storage       doubleratchet.SessionStorage
 }
 
 func IncrementNounce(account *Account) int64 {
-	nounce := account.accountNounce
-	account.accountNounce += 1
+	nounce := account.AccountNounce
+	account.AccountNounce += 1
 	return nounce
 }
 func (account Account) GetPrivateKey() ecdsa.PrivateKey {
-	return account.privateKey
+	return account.PrivateKey
 }
 func CreateAccount() *Account {
 	//creates an empty account
@@ -64,9 +66,9 @@ func GetAddress(wallet *Account) {
 func SignTransaction(wallet *Account, message []byte) []byte {
 	hash := sha256.Sum256(message)
 	messageHash := hash[:]
-	nounce := []byte(strconv.FormatInt(wallet.accountNounce, 10))
+	nounce := []byte(strconv.FormatInt(wallet.AccountNounce, 10))
 	messageHash = append(messageHash, nounce...)
-	r, s, err := ecdsa.Sign(rand.Reader, &wallet.privateKey, messageHash)
+	r, s, err := ecdsa.Sign(rand.Reader, &wallet.PrivateKey, messageHash)
 
 	if err != nil {
 		panic(err)
@@ -77,7 +79,7 @@ func SignTransaction(wallet *Account, message []byte) []byte {
 
 func InitExchange(wallet *Account, toAddress []byte, transaction blockchain.Message) *blockchain.KeyExchange {
 	var exchange *blockchain.KeyExchange
-	if wallet.balance < getTransactionFee()*2 {
+	if wallet.Balance < getTransactionFee()*2 {
 		log.Panic("Insufficient Funds")
 	} else {
 		curve := elliptic.P256()
@@ -85,8 +87,8 @@ func InitExchange(wallet *Account, toAddress []byte, transaction blockchain.Mess
 		if err != nil {
 			log.Panic(err)
 		}
-		proof := crypto.CreateProof(&wallet.privateKey, ephemeralKey)
-		exchange = &blockchain.KeyExchange{wallet.accountNounce, toAddress, wallet.address, nil, wallet.publicKey, proof, false}
+		proof := crypto.CreateProof(&wallet.PrivateKey, ephemeralKey)
+		exchange = &blockchain.KeyExchange{wallet.AccountNounce, toAddress, wallet.Address, nil, wallet.PublicKey, proof, false}
 		exchangeBytes := blockchain.SerializeMessage(exchange)
 		sig := SignTransaction(wallet, exchangeBytes)
 		blockchain.SignMessage(exchangeBytes, sig)
@@ -103,8 +105,8 @@ func RespExchange(wallet *Account, initialExchange *blockchain.KeyExchange) *blo
 	if err != nil {
 		log.Panic(err)
 	}
-	proof := crypto.CreateProof(&wallet.privateKey, ephemeralKey)
-	exchange := blockchain.ExchangeResponse{*initialExchange, nil, wallet.publicKey, wallet.address, proof}
+	proof := crypto.CreateProof(&wallet.PrivateKey, ephemeralKey)
+	exchange := blockchain.ExchangeResponse{*initialExchange, nil, wallet.PublicKey, wallet.Address, proof}
 	exchangeBytes := blockchain.SerializeMessage(exchange)
 	sig := SignTransaction(wallet, exchangeBytes)
 	blockchain.SignMessage(exchangeBytes, sig)

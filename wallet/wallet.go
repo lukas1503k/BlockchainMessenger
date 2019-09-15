@@ -1,1 +1,5 @@
 package wallet
+
+type Wallet struct {
+	storage
+}
