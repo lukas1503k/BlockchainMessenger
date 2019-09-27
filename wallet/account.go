@@ -56,10 +56,10 @@ func CreateKeys() (ecdsa.PrivateKey, []byte) {
 }
 
 func GetAddress(wallet *Account) {
-	keyHash := sha512.Sum512(wallet.publicKey)
+	keyHash := sha512.Sum512(wallet.PublicKey)
 	address := keyHash[:30]
 
-	wallet.address = address
+	wallet.Address = address
 
 }
 

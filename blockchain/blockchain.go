@@ -10,7 +10,7 @@ import (
 )
 
 const path string = "/data/ledger"
-type blockchain struct {
+type Blockchain struct {
 	currentLength int
 	currentHash   []byte
 	db *badger.DB
@@ -24,14 +24,14 @@ func ledgerExists() bool {
 	return true
 }
 
-func loadBlockchain() *blockchain {
+func loadBlockchain() *Blockchain {
 	if ledgerExists() {
 		return loadExistingBlockchain()
 	}
-	return initBlockchain()
+	return InitBlockchain()
 
 }
-func loadExistingBlockchain() *blockchain {
+func loadExistingBlockchain() *Blockchain {
 	options := badger.Options(nil)
 	options.Dir = path
 	options.ValueDir = path
@@ -47,11 +47,11 @@ func loadExistingBlockchain() *blockchain {
 
 	handle(err)
 	newBlock := deserializeBlock(newestHash)
-	return &blockchain{newBlock.chainLength, newBlock.blockHash, db}
+	return &Blockchain{newBlock.chainLength, newBlock.blockHash, db}
 
 }
 
-func addNewBlock(chain *blockchain, messages []*message) {
+func addNewBlock(chain *Blockchain, messages []*message) {
 
 	//fetch top block using blockchain.currentHash
 
@@ -77,7 +77,7 @@ func getBlockByHash(hash []byte, database *badger.DB) *block {
 	return searchedBlock
 
 }
-func initBlockchain() *blockchain {
+func InitBlockchain() *Blockchain {
 	//Precondition, no current blockchain exists
 
 	options := badger.DefaultOptions
@@ -99,7 +99,7 @@ func initBlockchain() *blockchain {
 	})
 	handle(err)
 
-	newBlockChain := blockchain{0, newestHash, db}
+	newBlockChain := Blockchain{0, newestHash, db}
 	return &newBlockChain
 
 }
@@ -129,15 +129,15 @@ func retry(dir string, originalOpts badger.Options) (*badger.DB, error) {
 	return db, err
 }
 
-func addBlockToChain(newBlock *block, chain *blockchain) {
+func addBlockToChain(newBlock *block, chain *Blockchain) {
 	db := chain.db
 	err := db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("newestBlock"))
 		handle(err)
 		latestBlock, err := item.Value()
-		err := txn.Set(chain.currentHash, latestBlock)
+		err = txn.Set(chain.currentHash, latestBlock)
 		handle(err)
-		err := txn.Set(newBlock.blockHash, serializeBlock(newBlock))
+		err = txn.Set(newBlock.blockHash, serializeBlock(newBlock))
 		handle(err)
 		chain.currentHash = newBlock.blockHash
 		chain.currentLength++
@@ -146,4 +146,10 @@ func addBlockToChain(newBlock *block, chain *blockchain) {
 	})
 	handle(err)
 
+}
+
+func handle(err interface{}){
+	if err != nil{
+		log.Panic(err)
+	}
 }
