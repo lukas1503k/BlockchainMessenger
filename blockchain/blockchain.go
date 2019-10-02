@@ -40,7 +40,7 @@ func loadExistingBlockchain() *Blockchain {
 	err = db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("newestHash"))
 		handle(err)
-		newestHash, err = item.Value()
+		newestHash = item.Value()
 
 		return err
 	})

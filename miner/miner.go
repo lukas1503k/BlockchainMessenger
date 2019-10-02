@@ -11,8 +11,8 @@ import (
 
 func verifyMessage(msg *message) bool {
 	blankMessage := msg
-	blankMessage.signature = nil
-	blankMessage.pubKeyHash = nil
+	blankMessage.Signature = nil
+	blankMessage.PubKeyHash = nil
 	messageHash := fmt.Sprintf("%x\n", blankMessage)
 	blankMessage = nil
 
