@@ -10,10 +10,14 @@ import (
 )
 
 const path string = "/data/ledger"
+const exchanges string = "/data/exchanges"
+
 type Blockchain struct {
 	currentLength int
 	currentHash   []byte
 	db *badger.DB
+	exchangesDB *badger.DB
+
 }
 
 func ledgerExists() bool {
@@ -35,19 +39,21 @@ func loadExistingBlockchain() *Blockchain {
 	options := badger.Options(nil)
 	options.Dir = path
 	options.ValueDir = path
-	db, err := openDatabase(path, options)
+	db, err := OpenDatabase(path, options)
 	var newestHash []byte
 	err = db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("newestHash"))
 		handle(err)
-		newestHash = item.Value()
+		newestHash, err = item.Value()
 
 		return err
 	})
 
+	exch , err := OpenDatabase(exchanges, options)
+
 	handle(err)
 	newBlock := deserializeBlock(newestHash)
-	return &Blockchain{newBlock.chainLength, newBlock.blockHash, db}
+	return &Blockchain{newBlock.chainLength, newBlock.blockHash, db, exch}
 
 }
 
@@ -84,7 +90,7 @@ func InitBlockchain() *Blockchain {
 	options.Dir = path
 	options.ValueDir = path
 	var newestHash []byte
-	db, err := openDatabase(path, options)
+	db, err := OpenDatabase(path, options)
 	handle(err)
 	err = db.Update(func(txn *badger.Txn) error {
 		genesisBlock := createGenesis(nil)
@@ -97,14 +103,16 @@ func InitBlockchain() *Blockchain {
 		return err
 
 	})
+	exch, err := OpenDatabase(exchanges, options)
+
 	handle(err)
 
-	newBlockChain := Blockchain{0, newestHash, db}
+	newBlockChain := Blockchain{1, newestHash, db, exch}
 	return &newBlockChain
 
 }
 
-func openDatabase(dir string, opts badger.Options) (*badger.DB, error) {
+func OpenDatabase(dir string, opts badger.Options) (*badger.DB, error) {
 	if db, err := badger.Open(opts); err != nil {
 		if strings.Contains(err.Error(), "LOCK") {
 			if db, err := retry(dir, opts); err == nil {
@@ -129,12 +137,13 @@ func retry(dir string, originalOpts badger.Options) (*badger.DB, error) {
 	return db, err
 }
 
-func addBlockToChain(newBlock *block, chain *Blockchain) {
+func AddBlockToChain(newBlock *block, chain *Blockchain) {
 	db := chain.db
 	err := db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("newestBlock"))
 		handle(err)
-		latestBlock, err := item.Value()
+		var latestBlock []byte
+		item.ValueCopy(latestBlock)
 		err = txn.Set(chain.currentHash, latestBlock)
 		handle(err)
 		err = txn.Set(newBlock.blockHash, serializeBlock(newBlock))

@@ -8,7 +8,8 @@ import (
 	"crypto/sha512"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/lukas1503k/msger/blockchain"
-	"github.com/lukas1503k/msger/crypto"
+	"github.com/lukas1503k/msger/blockchain/crypto"
+	exchangeCrypto "github.com/lukas1503k/msger/crypto"
 	"github.com/status-im/doubleratchet"
 	"log"
 	"strconv"
@@ -77,7 +78,7 @@ func SignTransaction(wallet *Account, message []byte) []byte {
 	return signature
 }
 
-func InitExchange(wallet *Account, toAddress []byte, transaction blockchain.Message) *blockchain.KeyExchange {
+func InitExchange(wallet *Account, toAddress []byte) *blockchain.KeyExchange {
 	var exchange *blockchain.KeyExchange
 	if wallet.Balance < getTransactionFee()*2 {
 		log.Panic("Insufficient Funds")
@@ -87,11 +88,11 @@ func InitExchange(wallet *Account, toAddress []byte, transaction blockchain.Mess
 		if err != nil {
 			log.Panic(err)
 		}
-		proof := crypto.CreateProof(&wallet.PrivateKey, ephemeralKey)
+		proof := exchangeCrypto.CreateProof(&wallet.PrivateKey, ephemeralKey)
 		exchange = &blockchain.KeyExchange{wallet.AccountNounce, toAddress, wallet.Address, nil, wallet.PublicKey, proof, false}
 		exchangeBytes := blockchain.SerializeMessage(exchange)
 		sig := SignTransaction(wallet, exchangeBytes)
-		blockchain.SignMessage(exchangeBytes, sig)
+		blockchain.SignMessage(exchange, sig)
 
 	}
 
@@ -112,4 +113,8 @@ func RespExchange(wallet *Account, initialExchange *blockchain.KeyExchange) *blo
 	blockchain.SignMessage(exchangeBytes, sig)
 
 	return &exchange
+}
+
+func getTransactionFee() float32{
+	return 0.0001
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
+	"github.com/lukas1503k/msger/blockchain"
 	"github.com/lukas1503k/msger/crypto"
 	"github.com/lukas1503k/msger/wallet"
 	"github.com/status-im/doubleratchet"
@@ -17,8 +18,8 @@ type Message struct {
 	From      []byte
 	Message   []byte
 	Signature []byte
-	PublicKey []byte
-	amount    float64
+	Publickey []byte
+	Amount    float64
 }
 
 type KeyExchange struct {
@@ -27,21 +28,22 @@ type KeyExchange struct {
 	From       []byte
 	Signature  []byte
 	PublicKey  []byte
+	Amount	float64
 	SchnorrZKP *crypto.SchnorrProof
 	responded  bool
 }
 
 type ExchangeResponse struct {
-	initialMessage KeyExchange
+	InitialMessage KeyExchange
 	Signature      []byte
 	PublicKey      []byte
-	Address        []byte
+	From        []byte
 	SchnorrZKP     *crypto.SchnorrProof
 }
 
 func CreateMessage(account *wallet.Account, to []byte, amount float64, message doubleratchet.Message) Message {
 	m := SerializeMessage(message)
-	messageBlock := Message{account.AccountNounce, to, account.Address, m, nil, amount}
+	messageBlock := Message{account.AccountNounce, to, account.Address, m, nil, account.PublicKey,amount}
 	messageHash := HashMessage(message)
 	sig := wallet.SignTransaction(account, messageHash)
 
@@ -103,3 +105,17 @@ func HashMessage(message interface{}) []byte {
 	messageHash := sha256.Sum256(messageBytes)
 	return messageHash[:]
 }
+
+
+func DeserializeKeyExchange(data []byte) *KeyExchange{
+	var decodedMessage KeyExchange
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+
+	err := decoder.Decode(decodedMessage)
+	fmt.Println(err)
+	return &decodedMessage
+
+}
+
+
+

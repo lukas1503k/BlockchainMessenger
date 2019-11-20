@@ -74,7 +74,7 @@ func StartRatchet(chain MessageChain, account Account) {
 
 }
 
-func sendMessage(account wallet.Account, chain MessageChain, message string, amount int64) *blockchain.Message {
+func sendMessage(account wallet.Account, chain MessageChain, message string, amount float64) *blockchain.Message {
 
 	m, err := chain.ratchetSession.RatchetEncrypt([]byte(message), nil)
 
