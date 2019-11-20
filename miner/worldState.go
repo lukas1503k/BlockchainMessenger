@@ -135,7 +135,7 @@ func (state *WorldState) VerifyTransaction(address []byte, transaction interface
 
 func (state *WorldState) VerifyExchangeResponse(address []byte, response *blockchain.ExchangeResponse) bool{
 	accountState := state.getAccountState(address)
-	for i := 0; i < len(accountState.transactions){
+	for i := 0; i < len(accountState.transactions); i++{
 		if accountState.transactions[i] == response.InitialMessage{
 			return true
 		}

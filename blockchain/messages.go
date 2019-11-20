@@ -17,6 +17,7 @@ type Message struct {
 	From      []byte
 	Message   []byte
 	Signature []byte
+	PublicKey []byte
 	amount    float64
 }
 
