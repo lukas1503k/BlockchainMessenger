@@ -1,37 +1,51 @@
-package cmd
+package mainc
 
 import (
 	"encoding/hex"
-	"flag"
 	"fmt"
 	"github.com/lukas1503k/msger/blockchain"
 	"log"
-	"os"
-	"runtime"
-	"strconv"
 )
-func createBlockChain(){
-	chain := blockchain.InitBlockchain()
+
+var chain *blockchain.Blockchain
+
+func createBlockChain() {
+	chain = blockchain.LoadBlockChain()
 	fmt.Print("Chain Created")
 }
+
 var account wallet.Account
 
-func initMessageExchange(to string){
+func initMessageExchange(to string) {
 	toAddress, err := hex.DecodeString(to)
-	if err != nil{
+	if err != nil {
 		log.Panic(err)
 	}
 	wallet.InitExchange(account, toAddress)
-	sendMessage
+	//sendMessage
 }
 
-func resptoMessageExchange(from string){
-	break
+func resptoMessageExchange(from string) {
+	return
 }
 
+func initAccount() {
+	return
 
-func initAccount(){
+}
 
+func main() {
+	chain := blockchain.InitBlockChain()
 
+	blockchain.AddNewBlock(chain, nil)
+	fmt.Printf("Previous Hash: %x\n", chain.currentHash)
+
+	/*
+		createChain := flag.String("Start", "", "Creates the blockchain or loads one")
+
+		if(createChain){
+			createBlockChain()
+		}
+	*/
 
 }
