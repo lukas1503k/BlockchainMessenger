@@ -1,5 +1,4 @@
 package blockchain
-
 //structure to represent the entire blockchain
 import (
 	"fmt"
@@ -16,8 +15,9 @@ const exchanges string = "/data/exchanges"
 type Blockchain struct {
 	currentLength int
 	currentHash   []byte
-	db            *badger.DB
-	exchangesDB   *badger.DB
+	db *badger.DB
+	exchangesDB *badger.DB
+
 }
 
 func ledgerExists() bool {
@@ -28,7 +28,7 @@ func ledgerExists() bool {
 	return true
 }
 
-func LoadBlockchain() *Blockchain {
+func loadBlockchain() *Blockchain {
 	if ledgerExists() {
 		return loadExistingBlockchain()
 	}
@@ -44,12 +44,12 @@ func loadExistingBlockchain() *Blockchain {
 	err = db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("newestHash"))
 		handle(err)
-		item.ValueCopy(newestHash)
+		newestHash, err = item.Value()
 
 		return err
 	})
 
-	exch, err := OpenDatabase(exchanges, options)
+	exch , err := OpenDatabase(exchanges, options)
 
 	handle(err)
 	newBlock := deserializeBlock(newestHash)
@@ -57,30 +57,27 @@ func loadExistingBlockchain() *Blockchain {
 
 }
 
-func AddNewBlock(chain *Blockchain, messages []*Message) {
+func addNewBlock(chain *Blockchain, messages []*message) {
 
 	//fetch top block using blockchain.currentHash
 
-	newBlock := CreateBlock(chain.currentHash, messages, chain.currentLength)
-	AddBlockToChain(newBlock, chain)
+	newBlock := createBlock(chain.currentHash, messages, chain.currentLength)
+	addBlockToChain(newBlock, chain)
 
 }
 
 func getBlockByHash(hash []byte, database *badger.DB) *block {
 
+
 	var searchedBlock *block
 	err := database.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(hash)
-		log.Print(err)
-
-		err = item.Value(func(val []byte) error {
-			searchedBlock = deserializeBlock(val)
-			return nil
-		})
-
+		log.Panic(err)
+		serializedBlock, err := item.Value()
+		searchedBlock = deserializeBlock(serializedBlock)
 		return err
-	})
-	if err != nil {
+	}
+	if err != nil{
 		log.Panic(err)
 	}
 	return searchedBlock
@@ -89,7 +86,7 @@ func getBlockByHash(hash []byte, database *badger.DB) *block {
 func InitBlockchain() *Blockchain {
 	//Precondition, no current blockchain exists
 
-	options := badger.DefaultOptions(path)
+	options := badger.DefaultOptions
 	options.Dir = path
 	options.ValueDir = path
 	var newestHash []byte
@@ -160,8 +157,8 @@ func AddBlockToChain(newBlock *block, chain *Blockchain) {
 
 }
 
-func handle(err interface{}) {
-	if err != nil {
+func handle(err interface{}){
+	if err != nil{
 		log.Panic(err)
 	}
 }
