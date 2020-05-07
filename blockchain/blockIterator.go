@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"github.com/dgraph-io/badger"
 	"github.com/golang-collections/collections/stack"
-	"github.com/lukas1503k/msger/blockchain/block"
-	"github.com/lukas1503k/msger/blockchain/blockchain"
+	"github.com/lukas1503k/BlockchainMessenger/messages"
 	"log"
 
 )
@@ -18,7 +17,7 @@ import (
 
 type blockIterator struct{
 	currentHash []byte
-	chain blockchain
+	chain Blockchain
 	prevHashes stack.Stack
 	pos int
 	db *badger.DB

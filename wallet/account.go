@@ -7,9 +7,8 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/lukas1503k/msger/blockchain"
-	"github.com/lukas1503k/msger/blockchain/crypto"
-	exchangeCrypto "github.com/lukas1503k/msger/crypto"
+	exchangeCrypto "github.com/lukas1503k/BlockchainMessenger/crypto"
+	"github.com/lukas1503k/BlockchainMessenger/messages"
 	"github.com/status-im/doubleratchet"
 	"log"
 	"strconv"
@@ -37,7 +36,7 @@ func CreateAccount() *Account {
 	//creates an empty account
 	privKey, pubKey := CreateKeys()
 
-	newAccount := Account{pubKey, privKey, nil, 0, 0, new([]MessageChain)}
+	newAccount := Account{pubKey, privKey, nil, 0, 0, new([]MessageChain), new(doubleratchet.SessionStorage)}
 
 	return &newAccount
 }
@@ -78,8 +77,8 @@ func SignTransaction(wallet *Account, message []byte) []byte {
 	return signature
 }
 
-func InitExchange(wallet *Account, toAddress []byte) *blockchain.KeyExchange {
-	var exchange *blockchain.KeyExchange
+func InitExchange(wallet *Account, toAddress []byte) *messages.KeyExchange {
+	var exchange *messages.KeyExchange
 	if wallet.Balance < getTransactionFee()*2 {
 		log.Panic("Insufficient Funds")
 	} else {
@@ -89,10 +88,10 @@ func InitExchange(wallet *Account, toAddress []byte) *blockchain.KeyExchange {
 			log.Panic(err)
 		}
 		proof := exchangeCrypto.CreateProof(&wallet.PrivateKey, ephemeralKey)
-		exchange = &blockchain.KeyExchange{wallet.AccountNounce, toAddress, wallet.Address, nil, wallet.PublicKey, proof, false}
-		exchangeBytes := blockchain.SerializeMessage(exchange)
+		exchange = &messages.KeyExchange{wallet.AccountNounce, toAddress, wallet.Address, nil, wallet.PublicKey, proof, false}
+		exchangeBytes := messages.SerializeMessage(exchange)
 		sig := SignTransaction(wallet, exchangeBytes)
-		blockchain.SignMessage(exchange, sig)
+		messages.SignMessage(exchange, sig)
 
 	}
 
@@ -106,15 +105,15 @@ func RespExchange(wallet *Account, initialExchange *blockchain.KeyExchange) *blo
 	if err != nil {
 		log.Panic(err)
 	}
-	proof := crypto.CreateProof(&wallet.PrivateKey, ephemeralKey)
-	exchange := blockchain.ExchangeResponse{*initialExchange, nil, wallet.PublicKey, wallet.Address, proof}
-	exchangeBytes := blockchain.SerializeMessage(exchange)
+	proof := crypto.CreateProof(&wallet.PrivateKey, ephemeralKey, wallet.Address)
+	exchange := messages.ExchangeResponse{*initialExchange, nil, wallet.PublicKey, wallet.Address, proof}
+	exchangeBytes := messages.SerializeMessage(exchange)
 	sig := SignTransaction(wallet, exchangeBytes)
-	blockchain.SignMessage(exchangeBytes, sig)
+	messages.SignMessage(exchangeBytes, sig)
 
 	return &exchange
 }
 
-func getTransactionFee() float32{
+func getTransactionFee() float64 {
 	return 0.0001
 }

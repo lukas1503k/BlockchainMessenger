@@ -3,64 +3,55 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/binary"
-	"github.com/ethereum/go-ethereum/accounts/abi"
+	"encoding/gob"
 	"github.com/ethereum/go-ethereum/common/math"
 	"log"
-	"encoding/gob"
 	"math/big"
 	"time"
-
 )
-
 
 const version int = 6
 const difficulty int = 1
+
 type block struct {
-	header blockHeader
-	messages    []*message
+	header      blockHeader
+	messages    []*messages.message
 	chainLength int
-	blockHash []byte
+	blockHash   []byte
 }
 
-
-type blockHeader struct{
-	timestamp time.Time
-	MerkleRoot	[]byte
-	version int
-	Nounce int64
+type blockHeader struct {
+	timestamp  time.Time
+	MerkleRoot []byte
+	version    int
+	Nounce     int64
 	difficulty int
-	prevHash []byte
-
+	prevHash   []byte
 }
 
 func CreateBlock(prevHash []byte, messages []miner.MessageInterface, chainLength int) *block {
 
-
-
 	hashRoot := getHash(messages)
 
 	blockHash, nounce := proofOfWork()
-
 
 	header := blockHeader{time.Now(), hashRoot, version, nounce, difficulty,
 		prevHash}
 
 	newBlock := &block{header, messages, chainLength + 1, blockHash}
 
-
 	return newBlock
 
 }
 
-func getHash(messages []*message) []byte {
+func getHash(messages []*messages.message) []byte {
 
 	data := SerializeMessageArray(messages)
 	return getRoot(data)
 }
 
-func createGenesis(messages []*message) *block {
+func createGenesis(messages []*messages.message) *block {
 
 	genesis := createBlock(nil, messages, 0)
 
@@ -86,20 +77,19 @@ func deserializeBlock(incBlock []byte) *block {
 	return &decodedBlock
 }
 
-
-func (block blockHeader)proofOfWork() ([]byte, int){
+func (block blockHeader) proofOfWork() ([]byte, int) {
 	target := big.NewInt(1)
-	target.Lsh(target, uint(256 - difficulty))
+	target.Lsh(target, uint(256-difficulty))
 	nounce := 0
 	var hashInt big.Int
 	var hash [32]byte
-	for nounce <  math.MaxInt64{
-		data := combineData(block.merkleRoot, block.prevHash, difficulty, int64(nounce))
+	for nounce < math.MaxInt64 {
+		data := combineData(block.MerkleRoot, block.prevHash, difficulty, int64(nounce))
 		hash = sha256.Sum256(data)
 		hashInt.SetBytes(hash[:])
-		if hashInt.Cmp(target) == -1{
+		if hashInt.Cmp(target) == -1 {
 			break
-		}else{
+		} else {
 			nounce++
 		}
 
@@ -108,8 +98,7 @@ func (block blockHeader)proofOfWork() ([]byte, int){
 
 }
 
-
-func combineData(data []byte, prevHash []byte, difficulty int, nounce int64) []byte{
+func combineData(data []byte, prevHash []byte, difficulty int, nounce int64) []byte {
 	combinedData := bytes.Join(
 		[][]byte{
 			prevHash,
@@ -119,7 +108,6 @@ func combineData(data []byte, prevHash []byte, difficulty int, nounce int64) []b
 		},
 		[]byte{})
 	return combinedData
-
 
 }
 func IntToBytes(num int64) []byte {
@@ -133,10 +121,10 @@ func IntToBytes(num int64) []byte {
 	return buff.Bytes()
 }
 
-func (newBlock block) VerifyHash() bool{
+func (newBlock block) VerifyHash() bool {
 	target := big.NewInt(1)
-	target.Lsh(target, uint(256 - newBlock.header.difficulty))
-	data := combineData(newBlock.merkleRoot, newBlock.prevHash, newBlock.header.difficulty, int64(newBlock.header.nounce))
+	target.Lsh(target, uint(256-newBlock.header.difficulty))
+	data := combineData(newBlock.header.MerkleRoot, newBlock.header.prevHash, newBlock.header.difficulty, int64(newBlock.header.Nounce))
 
 	var hashInt big.Int
 

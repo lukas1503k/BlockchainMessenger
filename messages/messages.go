@@ -1,16 +1,22 @@
-package blockchain
+package messages
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
-	"github.com/lukas1503k/msger/blockchain"
-	"github.com/lukas1503k/msger/crypto"
-	"github.com/lukas1503k/msger/wallet"
+	"strconv"
+
 	"github.com/status-im/doubleratchet"
 	"math/big"
 )
+
+type SchnorrProof struct {
+	r big.Int
+	V ecdsa.PublicKey
+}
 
 type Message struct {
 	nounce    int64
@@ -28,8 +34,8 @@ type KeyExchange struct {
 	From       []byte
 	Signature  []byte
 	PublicKey  []byte
-	Amount	float64
-	SchnorrZKP *crypto.SchnorrProof
+	Amount     float64
+	SchnorrZKP *SchnorrProof
 	responded  bool
 }
 
@@ -37,15 +43,29 @@ type ExchangeResponse struct {
 	InitialMessage KeyExchange
 	Signature      []byte
 	PublicKey      []byte
-	From        []byte
-	SchnorrZKP     *crypto.SchnorrProof
+	From           []byte
+	SchnorrZKP     *SchnorrProof
 }
 
-func CreateMessage(account *wallet.Account, to []byte, amount float64, message doubleratchet.Message) Message {
+func signTransaction(privKey ecdsa.PrivateKey, accountNounce int64, message []byte) []byte {
+	hash := sha256.Sum256(message)
+	messageHash := hash[:]
+	nounce := []byte(strconv.FormatInt(accountNounce, 10))
+	messageHash = append(messageHash, nounce...)
+	r, s, err := ecdsa.Sign(rand.Reader, &privKey, messageHash)
+
+	if err != nil {
+		panic(err)
+	}
+	signature := append(r.Bytes(), s.Bytes()...)
+	return signature
+}
+
+func CreateMessage(privKey ecdsa.PrivateKey, accountNounce int64, to []byte, amount float64, message doubleratchet.Message) Message {
 	m := SerializeMessage(message)
-	messageBlock := Message{account.AccountNounce, to, account.Address, m, nil, account.PublicKey,amount}
+	messageBlock := Message{account.AccountNounce, to, account.Address, m, nil, account.PublicKey, amount}
 	messageHash := HashMessage(message)
-	sig := wallet.SignTransaction(account, messageHash)
+	sig := signTransaction(privKey, accountNounce, messageHash)
 
 	messageBlock.Signature = sig
 	return messageBlock
@@ -72,7 +92,7 @@ func SerializeMessageArray(messages []*Message) [][]byte {
 	var serializedMessages [][]byte
 
 	for _, message := range messages {
-		serializedMessage := serializeMessage(message)
+		serializedMessage := SerializeMessage(message)
 		serializedMessages = append(serializedMessages, serializedMessage)
 	}
 	return serializedMessages
@@ -106,8 +126,7 @@ func HashMessage(message interface{}) []byte {
 	return messageHash[:]
 }
 
-
-func DeserializeKeyExchange(data []byte) *KeyExchange{
+func DeserializeKeyExchange(data []byte) *KeyExchange {
 	var decodedMessage KeyExchange
 	decoder := gob.NewDecoder(bytes.NewReader(data))
 
@@ -116,6 +135,3 @@ func DeserializeKeyExchange(data []byte) *KeyExchange{
 	return &decodedMessage
 
 }
-
-
-

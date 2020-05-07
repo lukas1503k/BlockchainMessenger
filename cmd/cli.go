@@ -3,8 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/lukas1503k/BlockchainMessenger/wallet"
-	"github.com/lukas1503k/msger/blockchain"
+	"github.com/lukas1503k/BlockchainMessenger/blockchain"
 	"log"
 )
 
